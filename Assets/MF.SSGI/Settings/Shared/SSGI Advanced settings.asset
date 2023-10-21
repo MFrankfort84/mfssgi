@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16c4b1e873f41b045a21dbc7e77f94d1, type: 3}
+  m_Name: SSGI Advanced settings
+  m_EditorClassIdentifier: 
+  ScanDepthThresholdFactor: 10
+  SSGISamplesReduction: 0.25
+  Search2DRange: 0.5
+  Search2DNoise: 0.5
+  SearchEdgeVignette: 0.1
+  MultiFrameApplyMultiSample: 1
+  MultiFrameDistanceThreshold: 0.1
+  MultiFrameShadowCompensate: 2
+  UseSSGIObjectOverrides: 1
+  ExpandObjectsRangeFactorMin: 0.01
+  ExpandObjectsRangeFactorMax: 0.025
+  DenoiseNormalDotMin: 0.5
+  DenoiseNormalDotMax: 1
+  DenoiseDepthDiffTheshold: 0.15
+  DenoiseShadowNormalContribution: 0.15
+  DenoiseColorNormalContribution: 0.1
+  MultiSampleNormalsDistance: 2
+  DefaultClipDepthBias: 0.01
+  DebugAAEdgeDetect: 0
+  AAEdgeDetectDepthThreshold: 0.15
+  AAEdgeDetectDotThreshold: 0.5
+  AANormalMapMatchThreshold: 0.85
+  FinalCompositAARange: 2

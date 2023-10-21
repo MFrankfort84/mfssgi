@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3177d31564551714f83149169ebd5426, type: 3}
+  m_Name: SSGI Mobile - 1 - High Quality settings
+  m_EditorClassIdentifier: 
+  UseEncodedLightDirections: 0
+  SSGISamplesHQ: 6
+  SSGISamplesBackfill: 4
+  SSGIRenderScale: 0.3
+  MaxGIResolution: 720
+  ScanDepthMultiplier: 0.5
+  MultiFrameCellSize: 5
+  MultiFrameEnergyFalloff: 0.98
+  UseRaymarchedShadows: 1
+  RaymarchSamplesHQ: 30
+  RaymarchSamplesBackfill: 20
+  RaymarchCubicDistanceFalloff: 0.25
+  RaymarchMaxRangeFactor: 0.6
+  DenoisePasses: 7
+  PreDenoisePixelSize: 15
+  ShadowCompensation: 1.05
+  IntensityCompensation: 1
+  AAQuality: 2
+  ApplyIndirectReflectionProbes: 0
+  MaxProbesPerPixel: 4
+  ReflectionProbeFallbackDirectShadows: 0
+  ReflectionProbeFallbackIndirectShadows: 0
+  ReflectionProbeFallbackRaymarchSamples: 10

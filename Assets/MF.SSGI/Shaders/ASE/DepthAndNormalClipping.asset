@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b2425a2284af743826c689403a4924, type: 3}
+  m_Name: DepthAndNormalClipping
+  m_EditorClassIdentifier: 
+  m_functionInfo: "// Made with Amplify Shader Editor v1.9.1.3\n// Available at the
+    Unity Asset Store - http://u3d.as/y3X \n/*ASEBEGIN\nVersion=19103\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;24;-771.7139,-2.084359;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.SimpleDivideOpNode;25;-768.2937,96.59576;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.SimpleAddOpNode;29;-1071.294,82.59579;Inherit;False;2;2;0;FLOAT;1;False;1;FLOAT;1;False;1;FLOAT;0\nNode;AmplifyShaderEditor.Compare;30;-1357.294,80.59579;Inherit;False;4;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.RangedFloatNode;31;-1665.294,163.5958;Inherit;False;Global;_default_clip_depth_bias;_default_clip_depth_bias;2;0;Create;True;0;0;0;False;0;False;0.025;0.01;0;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.RangedFloatNode;20;-1599.404,78.84225;Inherit;False;Property;_ClipDepthBias;ClipDepthBias;1;1;[PerRendererData];Create;False;0;0;0;True;0;False;-1;-1;0;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.PosVertexDataNode;36;-1321.81,259.9234;Inherit;False;0;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4\nNode;AmplifyShaderEditor.TransformPositionNode;35;-1114.809,253.9235;Inherit;False;Object;World;False;Fast;True;1;0;FLOAT3;0,0,0;False;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3\nNode;AmplifyShaderEditor.ScreenPosInputsNode;11;-1452.935,-117.2627;Float;False;0;False;0;5;FLOAT4;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4\nNode;AmplifyShaderEditor.FunctionNode;34;-896.3423,259.1055;Inherit;False;SimpleLinearDepth;-1;;3;d85b034c2916eb140a3ba097d9e42c43;0;1;7;FLOAT3;0,0,0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.Compare;3;-466.581,-4.317269;Inherit;False;2;4;0;FLOAT;0;False;1;FLOAT;1;False;2;FLOAT;1;False;3;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.Compare;26;-465.2937,152.5958;Inherit;False;4;4;0;FLOAT;0;False;1;FLOAT;1;False;2;FLOAT;1;False;3;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.SimpleMinOpNode;28;-266.2937,65.59576;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.FunctionOutput;0;-112,1;Inherit;False;True;-1;Output;0;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.SamplerNode;1;-1238.935,-138.2627;Inherit;True;Global;_MF_SSGI_Normals_HQ;_MF_SSGI_Normals_HQ;0;1;[HideInInspector];Create;True;0;0;0;False;0;False;-1;None;None;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4\nWireConnection;24;0;1;4\nWireConnection;24;1;29;0\nWireConnection;25;0;1;4\nWireConnection;25;1;29;0\nWireConnection;29;0;30;0\nWireConnection;30;0;20;0\nWireConnection;30;2;31;0\nWireConnection;30;3;20;0\nWireConnection;35;0;36;0\nWireConnection;34;7;35;0\nWireConnection;3;0;24;0\nWireConnection;3;1;34;0\nWireConnection;26;0;25;0\nWireConnection;26;1;34;0\nWireConnection;28;0;3;0\nWireConnection;28;1;26;0\nWireConnection;0;0;28;0\nWireConnection;1;1;11;0\nASEEND*/\n//CHKSM=4DD261FAC9C064E335E05FC94BBC812E2A8AF86D"
+  m_functionName: 
+  m_description: 
+  m_additionalIncludes:
+    m_additionalIncludes: []
+    m_outsideIncludes: []
+  m_additionalPragmas:
+    m_additionalPragmas: []
+    m_outsidePragmas: []
+  m_additionalDirectives:
+    m_validData: 0
+    m_isDirty: 0
+    m_moduleName: ' Additional Directives'
+    m_independentModule: 1
+    m_customEdited: 0
+    m_additionalDirectives: []
+    m_shaderFunctionDirectives: []
+    m_nativeDirectives: []
+    m_nativeDirectivesIndex: -1
+    m_nativeDirectivesFoldout: 0
+    m_directivesSaveItems: []
+  m_nodeCategory: 3
+  m_headerStyle: 0
+  m_headerColor: {r: 1, g: 0.4, b: 0, a: 1}
+  m_customNodeCategory: 
+  m_previewPosition: 0
+  m_hidden: 0
+  m_url: 
