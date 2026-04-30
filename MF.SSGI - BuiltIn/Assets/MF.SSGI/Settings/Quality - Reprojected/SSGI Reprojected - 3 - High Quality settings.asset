@@ -21,7 +21,7 @@ MonoBehaviour:
   MultiFrameCellSize: 3
   MultiFrameEnergyFalloff: 0.98
   UseRaymarchedShadows: 1
-  RaymarchSamplesHQ: 18
+  RaymarchSamplesHQ: 19
   RaymarchSamplesBackfill: 9
   RaymarchCubicDistanceFalloff: 0.5
   RaymarchMaxRangeFactor: 0.5

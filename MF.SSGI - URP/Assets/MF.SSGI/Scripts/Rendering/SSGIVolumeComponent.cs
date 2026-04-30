@@ -20,7 +20,7 @@ namespace MF.SSGI {
         [Space]
         [Header("Light behaviour")]
         [Tooltip("Foreach 'light distance' traveled, the light intensity is cut in half")]
-        public FloatParameter LightFalloffDistance = new FloatParameter(1f);
+        public FloatParameter LightFalloffDistance = new FloatParameter(5f);
         [Tooltip("Mutliplier to the final GI pass")]
         public FloatParameter LightIntensity = new FloatParameter(2f);
         
@@ -64,7 +64,7 @@ namespace MF.SSGI {
         [Tooltip("Tints the shadows")]
         public ColorParameter ShadowTint = new ColorParameter(new Color(0.06f, 0.08f, 0.12f), false, false, true);
         [Tooltip("Pow over the final boosted result")]
-        public ClampedFloatParameter ShadowExponential = new ClampedFloatParameter(0.3f, 0.25f, 1.5f);
+        public ClampedFloatParameter ShadowExponential = new ClampedFloatParameter(0.5f, 0.25f, 1.5f);
         [Tooltip("Subtracted from the final shadow result, sharpening the shadows")]
         public ClampedFloatParameter ShadowContrast = new ClampedFloatParameter(0.05f, 0f, 2f);
 
@@ -78,7 +78,7 @@ namespace MF.SSGI {
         [Space]
         [Header("Casted Shadows (use SSGI-debugger to view)")]
         [Tooltip("The intensity the casted shadows are added to the mixture")]
-        public ClampedFloatParameter CastedShadowsIntensity = new ClampedFloatParameter(10f, 0f, 50f);
+        public ClampedFloatParameter CastedShadowsIntensity = new ClampedFloatParameter(5f, 0f, 50f);
         [Tooltip("Set to '0' to only allow 'bright' pixels to cast shadows. Set to '1' to have a more tradition omni-dir AO")]
         public ClampedFloatParameter CastedShadowsOmniDirectional = new ClampedFloatParameter(0.5f, 0f, 1f);
         [Tooltip("The distance over which a shadow-ray looses its power")]

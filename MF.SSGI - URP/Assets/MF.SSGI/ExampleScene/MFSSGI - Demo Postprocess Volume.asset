@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-5214911027779324615
+--- !u!114 &-3496142291092322138
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 630a38b420b39c040b1469b07a79e7d6, type: 3}
   m_Name: SSGIVolumeComponent
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::MF.SSGI.SSGIVolumeComponent
   active: 1
   PreMultiply:
     m_OverrideState: 0
@@ -20,35 +20,35 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 1
   FinalIntensity:
-    m_OverrideState: 1
-    m_Value: 0.333
-  LightFalloffDistance:
     m_OverrideState: 0
-    m_Value: 1
+    m_Value: 1.25
+  LightFalloffDistance:
+    m_OverrideState: 1
+    m_Value: 5
   LightIntensity:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 2
   LightDirInfluence:
-    m_OverrideState: 1
-    m_Value: 0.8
+    m_OverrideState: 0
+    m_Value: 0.95
   NormalmapBoost:
-    m_OverrideState: 1
-    m_Value: 0.5
+    m_OverrideState: 0
+    m_Value: 0.75
   GITint:
     m_OverrideState: 0
     m_Value: {r: 1, g: 1, b: 1, a: 1}
   GIContrast:
-    m_OverrideState: 1
-    m_Value: 0.8
+    m_OverrideState: 0
+    m_Value: 0.65
   GISaturation:
-    m_OverrideState: 1
-    m_Value: 1.25
+    m_OverrideState: 0
+    m_Value: 1
   GIVibrance:
     m_OverrideState: 0
     m_Value: 0.5
   FallbackDirectIntensity:
-    m_OverrideState: 1
-    m_Value: 0.1
+    m_OverrideState: 0
+    m_Value: 0.25
   FallbackDirectSaturation:
     m_OverrideState: 0
     m_Value: 1
@@ -59,17 +59,17 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 1
   ShadowIntensity:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: 2.5
   ShadowTint:
     m_OverrideState: 0
     m_Value: {r: 0.06, g: 0.08, b: 0.12, a: 1}
   ShadowExponential:
     m_OverrideState: 1
-    m_Value: 0.35
+    m_Value: 0.5
   ShadowContrast:
-    m_OverrideState: 1
-    m_Value: 0.1
+    m_OverrideState: 0
+    m_Value: 0.05
   ContactShadowsRange:
     m_OverrideState: 0
     m_Value: 0.25
@@ -77,8 +77,8 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 0.25
   CastedShadowsIntensity:
-    m_OverrideState: 0
-    m_Value: 10
+    m_OverrideState: 1
+    m_Value: 5
   CastedShadowsOmniDirectional:
     m_OverrideState: 0
     m_Value: 0.5
@@ -101,4 +101,4 @@ MonoBehaviour:
   m_Name: MFSSGI - Demo Postprocess Volume
   m_EditorClassIdentifier: 
   components:
-  - {fileID: -5214911027779324615}
+  - {fileID: -3496142291092322138}

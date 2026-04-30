@@ -7,33 +7,33 @@ QualitySettings:
   m_CurrentQuality: 0
   m_QualitySettings:
   - serializedVersion: 5
-    name: High
-    pixelLightCount: 2
+    name: Ultra
+    pixelLightCount: 4
     shadows: 2
-    shadowResolution: 1
+    shadowResolution: 2
     shadowProjection: 1
-    shadowCascades: 2
-    shadowDistance: 40
+    shadowCascades: 4
+    shadowDistance: 150
     shadowNearPlaneOffset: 3
     shadowCascade2Split: 0.33333334
     shadowCascade4Split: {x: 0.06666667, y: 0.2, z: 0.46666667}
     shadowmaskMode: 1
-    skinWeights: 2
+    skinWeights: 255
     globalTextureMipmapLimit: 0
     textureMipmapLimitSettings: []
-    anisotropicTextures: 1
-    antiAliasing: 0
-    softParticles: 0
+    anisotropicTextures: 2
+    antiAliasing: 2
+    softParticles: 1
     softVegetation: 1
     realtimeReflectionProbes: 1
     billboardsFaceCameraPosition: 1
-    useLegacyDetailDistribution: 1
+    useLegacyDetailDistribution: 0
     adaptiveVsync: 0
     vSyncCount: 1
-    realtimeGICPUUsage: 25
+    realtimeGICPUUsage: 100
     adaptiveVsyncExtraA: 0
     adaptiveVsyncExtraB: 0
-    lodBias: 1
+    lodBias: 2
     meshLodThreshold: 1
     maximumLODLevel: 0
     enableLODCrossFade: 1
@@ -43,7 +43,7 @@ QualitySettings:
     streamingMipmapsRenderersPerFrame: 512
     streamingMipmapsMaxLevelReduction: 2
     streamingMipmapsMaxFileIORequests: 1024
-    particleRaycastBudget: 256
+    particleRaycastBudget: 4096
     asyncUploadTimeSlice: 2
     asyncUploadBufferSize: 16
     asyncUploadPersistentBuffer: 1
@@ -62,7 +62,21 @@ QualitySettings:
   m_TextureMipmapLimitGroupNames: []
   m_PerPlatformDefaultQuality:
     Android: 0
+    EmbeddedLinux: 0
+    GameCoreScarlett: 0
+    GameCoreXboxOne: 0
+    Kepler: 0
+    LinuxHeadlessSimulation: 0
+    Nintendo Switch: 0
     Nintendo Switch 2: 0
+    PS4: 0
+    PS5: 0
+    QNX: 0
     Server: 0
     Standalone: 0
+    VisionOS: 0
     WebGL: 0
+    Windows Store Apps: 0
+    XboxOne: 0
+    iPhone: 0
+    tvOS: 0

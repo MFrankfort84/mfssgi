@@ -25,7 +25,7 @@ MonoBehaviour:
   RaymarchSamplesBackfill: 8
   RaymarchCubicDistanceFalloff: 0.25
   RaymarchMaxRangeFactor: 0.6
-  DenoisePasses: 5
+  DenoisePasses: 4
   PreDenoisePixelSize: 10
   ShadowCompensation: 1.05
   IntensityCompensation: 1

@@ -719,6 +719,17 @@ namespace MF.SSGI {
             RenderTexture taaCurrent = GenBufferedRT(SSGIPassType.TAAHistory, renderingData.cameraData.camera, descriptor, cmd, filterMode);
             RTWrapper taaWrapper = FetchBufferedRTwrapper(SSGIPassType.TAAHistory, renderingData.cameraData.camera);
             cmd.SetGlobalTexture("_TAAHistory", taaWrapper.RT2 != null ? (Texture)taaWrapper.RT2 : Texture2D.blackTexture);
+
+            //TAA's disocclusion check samples _WorldPositions / _PrevWorldPositions. They're set as
+            //material properties on scanEnvironmentMaterial / captureLightMaterial / captureNormalsMaterial,
+            //but NOT on taaShadowMaterial. Without an explicit bind here, those samplers fall back to
+            //whatever is globally bound by another camera or previous frame — producing intermittent
+            //disocclusion misfires that show up as flickering cube silhouettes when DenoisePasses is low.
+            RTWrapper worldPosWrapperTAA = FetchBufferedRTwrapper(SSGIPassType.WorldPositions, renderingData.cameraData.camera);
+            cmd.SetGlobalTexture("_WorldPositions", worldPosWrapperTAA.RT1);
+            cmd.SetGlobalTexture("_PrevWorldPositions",
+                worldPosWrapperTAA.RT2 != null ? (Texture)worldPosWrapperTAA.RT2 : Texture2D.blackTexture);
+
             cmd.Blit(nameIDFinal, taaCurrent, taaShadowMaterial);
             //Re-bind the global so FinalBlit reads the TAA-stabilized output
             cmd.SetGlobalTexture("_MF_SSGI_Denoised_Final", taaCurrent);

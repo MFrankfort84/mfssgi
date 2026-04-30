@@ -555,50 +555,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1047204934}
   m_LocalEulerAnglesHint: {x: 9.72, y: -450, z: 0}
---- !u!1 &832575517
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 832575519}
-  - component: {fileID: 832575518}
-  m_Layer: 0
-  m_Name: Global Volume
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &832575518
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 832575517}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!4 &832575519
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 832575517}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &891387093
 GameObject:
   m_ObjectHideFlags: 0
@@ -1606,7 +1562,7 @@ MonoBehaviour:
     ShadowMaxDistace: 10
     ScanDepth2DRangeFactor: 0.15
     Orthographic2DRangeFactor: 0.15
-    Quality: {fileID: 11400000, guid: 01c045a008da4b5479de37f52de085b2, type: 2}
+    Quality: {fileID: 11400000, guid: 3d85b0f53f6c88a428cf27af4b910554, type: 2}
     Lighting: {fileID: 11400000, guid: 87a3603b30103244b85aa87abba306d3, type: 2}
     Advanced: {fileID: 11400000, guid: e3eaae48796cb794287872d89fae0cfd, type: 2}
     Raymarch: {fileID: 11400000, guid: 331462db27454714d9c0f2058a8e42b1, type: 2}
@@ -1617,8 +1573,8 @@ MonoBehaviour:
     DebugAlbedo: 0
   preMultiply: 0.25
   finalContrast: 1
-  finalIntensity: 2
-  lightFalloffDistance: 1
+  finalIntensity: 1.25
+  lightFalloffDistance: 5
   lightIntensity: 2
   lightDirInfluence: 0.95
   normalmapBoost: 0.75
@@ -1894,17 +1850,17 @@ ReflectionProbe:
   serializedVersion: 2
   m_Type: 0
   m_Mode: 0
-  m_RefreshMode: 1
-  m_TimeSlicingMode: 1
+  m_RefreshMode: 0
+  m_TimeSlicingMode: 0
   m_Resolution: 128
   m_UpdateFrequency: 0
-  m_BoxSize: {x: 15, y: 15, z: 15}
+  m_BoxSize: {x: 10, y: 10, z: 10}
   m_BoxOffset: {x: 0, y: 0, z: 0}
   m_NearClip: 0.3
   m_FarClip: 1000
   m_ShadowDistance: 100
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -2027,7 +1983,6 @@ CanvasRenderer:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 832575519}
   - {fileID: 1513796223}
   - {fileID: 1539880213}
   - {fileID: 1340719550}

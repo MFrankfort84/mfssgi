@@ -404,8 +404,12 @@ Shader "MF_SSGI/SSGI"
                             uvLerp
                         );
 
-                        //One cheap hash gives both the noise offset and the reduction roll
-                        float3 rnd = MFSSGI_Hash23(i.uv + envUVMipped.xy);
+                        //One cheap hash gives both the noise offset and the reduction roll.
+                        //MFSSGI_Hash23 is Dave Hoskins' hash-without-sine, tuned for integer-pixel
+                        //inputs — feeding it UVs in [0,1] produces correlated diagonal banding
+                        //because the X/Y multipliers (0.1031, 0.1030) collapse onto the X=Y axis.
+                        //Scale to pixel range so adjacent samples land ~1.0 apart in input space.
+                        float3 rnd = MFSSGI_Hash23((i.uv + envUVMipped.xy) * _ssgi_res);
                         envUVMipped.xy += (rnd.xy - 0.5) * 2.0 * _scan_noise;
 
                         //Scale UV

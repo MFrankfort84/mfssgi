@@ -67,7 +67,7 @@ namespace MF.SSGI {
         [SerializeField, Range(0f, 10f)] private float finalIntensity = 2f;
 
         [Header("Light behaviour")]
-        [SerializeField] private float lightFalloffDistance = 1f;
+        [SerializeField] private float lightFalloffDistance = 5f;
         [SerializeField] private float lightIntensity = 2f;
 
         [Header("Encoded light directions")]
