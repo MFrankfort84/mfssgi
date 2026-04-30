@@ -1,0 +1,5 @@
+-------- V1.2 release note -------- 
+- 29% performance increase (at 8k, using the SSGI Reprojected - 4 - Ultra High Quality profile)
+- More stable denoising
+- Low & Medium quality AA now looks better then High quality did before
+- Thanks Claude!

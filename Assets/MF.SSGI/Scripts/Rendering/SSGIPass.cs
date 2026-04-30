@@ -35,6 +35,7 @@ namespace MF.SSGI {
             FinalDenoisedColor,
             FinalDenoisedShadow,
             FinalDenoisedLightDir,
+            TAAHistory,
         }
 
         public class DebugRTData {
@@ -119,6 +120,7 @@ namespace MF.SSGI {
         private Material captureNormalsMaterial;
         private Material scanEnvironmentMaterial;
         private Material denoiseImageMaterial;
+        private Material taaShadowMaterial;
         private Material blitFinalImageMaterial;
 
         private ScriptableRenderer renderer;
@@ -288,7 +290,7 @@ namespace MF.SSGI {
                 captureNormalsMaterial = new Material(Shader.Find("MF_SSGI/CaptureNormals"));
             }
 
-            Shader.SetGlobalInt("_use_deferred", settings.UseDeferredRendering ? 1 : 0);
+            if (settings.UseDeferredRendering) Shader.EnableKeyword("_USE_DEFERRED"); else Shader.DisableKeyword("_USE_DEFERRED");
             Camera cam = renderingData.cameraData.camera;
             Shader.SetGlobalVector("_cam_world_forward", cam.transform.forward);
             if (cam.orthographic && cam.nearClipPlane < 0f) {
@@ -397,7 +399,7 @@ namespace MF.SSGI {
                 RequestedObjects.Count((item) => item && item.RequiresSSGIMaskRendering) > 0;
 
             Shader.SetGlobalFloat("_default_clip_depth_bias", settings.Advanced.DefaultClipDepthBias);
-            Shader.SetGlobalInt("_use_ssgi_objects", requiresSSGIObjectsRendering ? 1 : 0);
+            if (requiresSSGIObjectsRendering) Shader.EnableKeyword("_USE_SSGI_OBJECTS"); else Shader.DisableKeyword("_USE_SSGI_OBJECTS");
 
             //Gen material
             if (!ssgiObjectMaterial) {
@@ -460,7 +462,7 @@ namespace MF.SSGI {
             }
 
             cmd.GetTemporaryRT(nameID, descriptor, FilterMode.Trilinear); //2021 compatible
-            cmd.Blit(renderer.cameraColorTarget, nameID);
+            cmd.Blit(renderer.cameraColorTargetHandle, nameID);
             rtsToRelease.Add(nameID);
 
             //Execute context, as we need the ScreenCapture before we write the expand vertices
@@ -478,7 +480,7 @@ namespace MF.SSGI {
             descriptor = GetDescriptor(renderingData, halfHDR, settings.Quality.SSGIRenderScale * limitedResScale);
             nameID = Shader.PropertyToID("_MF_SSGI_LightCapture");
             cmd.GetTemporaryRT(nameID, descriptor, FilterMode.Point);
-            cmd.Blit(renderer.cameraColorTarget, nameID, captureLightMaterial); //2021 compatible
+            cmd.Blit(renderer.cameraColorTargetHandle, nameID, captureLightMaterial); //2021 compatible
             rtsToRelease.Add(nameID);
 
             //Albedo boost
@@ -564,7 +566,7 @@ namespace MF.SSGI {
             Shader.SetGlobalFloat("_ssgi_samples_reduction", settings.Advanced.SSGISamplesReduction);
             Shader.SetGlobalVector("_ssgi_res", new Vector4(descriptor.width, descriptor.height, 0f, 0f));
             Shader.SetGlobalFloat("_edge_vignette", settings.Advanced.SearchEdgeVignette);
-            Shader.SetGlobalInt("_do_encode_lightdir", doEncodeLightDir ? 1 : 0);
+            if (doEncodeLightDir) Shader.EnableKeyword("_ENCODE_LIGHTDIR"); else Shader.DisableKeyword("_ENCODE_LIGHTDIR");
             Shader.SetGlobalFloat("_multi_sample_normal_distance", settings.Advanced.MultiSampleNormalsDistance);
 
             Shader.SetGlobalFloat("_scan_base_range", settings.Advanced.Search2DRange);
@@ -705,6 +707,22 @@ namespace MF.SSGI {
                 }
             }
 
+            //--------- TAA on shadow channel
+            //Blends current denoised shadow with reprojected previous-frame shadow under
+            //a 5-tap neighborhood clamp. Greatly reduces temporal noise on shadows without
+            //the spatial blur cost. Color/light-dir pass through unchanged.
+            if (!taaShadowMaterial) {
+                taaShadowMaterial = new Material(Shader.Find("MF_SSGI/TAA"));
+            }
+            cmd.SetGlobalFloat("_taa_shadow_blend", 0.85f);
+            cmd.SetGlobalFloat("_taa_world_pos_threshold", 0.1f);
+            RenderTexture taaCurrent = GenBufferedRT(SSGIPassType.TAAHistory, renderingData.cameraData.camera, descriptor, cmd, filterMode);
+            RTWrapper taaWrapper = FetchBufferedRTwrapper(SSGIPassType.TAAHistory, renderingData.cameraData.camera);
+            cmd.SetGlobalTexture("_TAAHistory", taaWrapper.RT2 != null ? (Texture)taaWrapper.RT2 : Texture2D.blackTexture);
+            cmd.Blit(nameIDFinal, taaCurrent, taaShadowMaterial);
+            //Re-bind the global so FinalBlit reads the TAA-stabilized output
+            cmd.SetGlobalTexture("_MF_SSGI_Denoised_Final", taaCurrent);
+
             //Done
             rtsToRelease.Add(nameID1);
             rtsToRelease.Add(nameID2);
@@ -761,8 +779,8 @@ namespace MF.SSGI {
             0f, 0f));
 
             CommandBuffer cmd = CommandBufferPool.Get("MFSSGI_FinalBlit");
-            cmd.SetRenderTarget(renderer.cameraColorTarget, renderer.cameraDepthTarget); //Unity 2021 compatible
-            cmd.Blit(null, renderer.cameraColorTarget, blitFinalImageMaterial);
+            cmd.SetRenderTarget(renderer.cameraColorTargetHandle, renderer.cameraDepthTargetHandle); //Unity 2021 compatible
+            cmd.Blit(null, renderer.cameraColorTargetHandle, blitFinalImageMaterial);
 
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);

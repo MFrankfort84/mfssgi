@@ -1000,7 +1000,7 @@ namespace AssetStoreTools.Validator
                     return ShaderUtil.ShaderHasError(shader);
                 case ComputeShader shader:
                     return ShaderUtil.GetComputeShaderMessageCount(shader) > 0;
-                case RayTracingShader shader:
+                case UnityEngine.Rendering.RayTracingShader shader:
                     return ShaderUtil.GetRayTracingShaderMessageCount(shader) > 0;
                 default:
                     return false;

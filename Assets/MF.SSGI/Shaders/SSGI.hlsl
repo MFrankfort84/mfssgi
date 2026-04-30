@@ -21,7 +21,7 @@ extern float4 _MF_SSGI_Normals_HQ_ST;
 extern sampler2D _MF_SSGI_Normals_LQ;
 extern float4 _MF_SSGI_Normals_LQ_ST;
 
-extern int _use_deferred;
+//_use_deferred replaced by _USE_DEFERRED keyword (multi_compile in including shaders)
 
 extern float _forward_albedo_contrast;
 extern float _forward_albedo_subtract_fog;
@@ -49,20 +49,38 @@ extern float _raymarch_surface_depth_bias_min = 0.05;
 extern float _raymarch_surface_depth_bias_max = 0.25;
 
 
+//WebGL2/GLES3 has a 16-sampler limit and SSGI.shader uses many other samplers.
+//Cap probes to 4 on those APIs to stay within the limit.
+#if defined(SHADER_API_GLES3) || defined(SHADER_API_GLES)
+    #define MFSSGI_MAX_PROBES 4
+#else
+    #define MFSSGI_MAX_PROBES 8
+#endif
+
 //Params: x = intensity, y = gamma, z = baked yes/no
 extern samplerCUBE _ssgi_refprobe_texture_0;   extern float4 _ssgi_refprobe_texture_0_ST;   extern float3 _ssgi_refprobe_center_0; extern float3 _ssgi_refprobe_source_0;   extern float3 _ssgi_refprobe_extents_0;  extern float4 _ssgi_refprobe_params_0; extern float4 _ssgi_refprobe_rayinfo_0;
 extern samplerCUBE _ssgi_refprobe_texture_1;   extern float4 _ssgi_refprobe_texture_1_ST;   extern float3 _ssgi_refprobe_center_1; extern float3 _ssgi_refprobe_source_1;   extern float3 _ssgi_refprobe_extents_1;  extern float4 _ssgi_refprobe_params_1; extern float4 _ssgi_refprobe_rayinfo_1;
 extern samplerCUBE _ssgi_refprobe_texture_2;   extern float4 _ssgi_refprobe_texture_2_ST;   extern float3 _ssgi_refprobe_center_2; extern float3 _ssgi_refprobe_source_2;   extern float3 _ssgi_refprobe_extents_2;  extern float4 _ssgi_refprobe_params_2; extern float4 _ssgi_refprobe_rayinfo_2;
 extern samplerCUBE _ssgi_refprobe_texture_3;   extern float4 _ssgi_refprobe_texture_3_ST;   extern float3 _ssgi_refprobe_center_3; extern float3 _ssgi_refprobe_source_3;   extern float3 _ssgi_refprobe_extents_3;  extern float4 _ssgi_refprobe_params_3; extern float4 _ssgi_refprobe_rayinfo_3;
+#if MFSSGI_MAX_PROBES > 4
 extern samplerCUBE _ssgi_refprobe_texture_4;   extern float4 _ssgi_refprobe_texture_4_ST;   extern float3 _ssgi_refprobe_center_4; extern float3 _ssgi_refprobe_source_4;   extern float3 _ssgi_refprobe_extents_4;  extern float4 _ssgi_refprobe_params_4; extern float4 _ssgi_refprobe_rayinfo_4;
 extern samplerCUBE _ssgi_refprobe_texture_5;   extern float4 _ssgi_refprobe_texture_5_ST;   extern float3 _ssgi_refprobe_center_5; extern float3 _ssgi_refprobe_source_5;   extern float3 _ssgi_refprobe_extents_5;  extern float4 _ssgi_refprobe_params_5; extern float4 _ssgi_refprobe_rayinfo_5;
 extern samplerCUBE _ssgi_refprobe_texture_6;   extern float4 _ssgi_refprobe_texture_6_ST;   extern float3 _ssgi_refprobe_center_6; extern float3 _ssgi_refprobe_source_6;   extern float3 _ssgi_refprobe_extents_6;  extern float4 _ssgi_refprobe_params_6; extern float4 _ssgi_refprobe_rayinfo_6;
 extern samplerCUBE _ssgi_refprobe_texture_7;   extern float4 _ssgi_refprobe_texture_7_ST;   extern float3 _ssgi_refprobe_center_7; extern float3 _ssgi_refprobe_source_7;   extern float3 _ssgi_refprobe_extents_7;  extern float4 _ssgi_refprobe_params_7; extern float4 _ssgi_refprobe_rayinfo_7;
+#endif
 
 
 //Sign has the issue that it returns 0 if the value is zero. Use this to flip values, not intrinsic sign!
 float SignBinary(float value) {
     return value >= 0.0 ? 1.0 : -1.0;
+}
+
+//Cheap 2D->3D hash (no sin/cos). Based on Dave_Hoskins' hash-without-sine.
+//Replaces sin(dot(...))*frac(...) which is expensive on GLES/WebGL.
+float3 MFSSGI_Hash23(float2 p) {
+    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    p3 += dot(p3, p3.yxz + 33.33);
+    return frac((p3.xxy + p3.yzz) * p3.zyx);
 }
 
 //Ripped from: Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl
@@ -97,21 +115,6 @@ half3 SampleCameraNormalsTexture(float2 uv) {
 
 
 
-
-float3 RGBToHSV(float3 c) {
-    float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-    float4 p = lerp(float4(c.bg, K.wz), float4(c.gb, K.xy), step(c.b, c.g));
-    float4 q = lerp(float4(p.xyw, c.r), float4(c.r, p.yzx), step(p.x, c.r));
-    float d = q.x - min(q.w, q.y);
-    float e = 1.0e-10;
-    return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
-}
-
-float3 HSVToRGB(float3 c) {
-    float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-    float3 p = abs(frac(c.xxx + K.xyz) * 6.0 - K.www);
-    return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
-}
 
 float EncodeNormalToFloat(float3 normal) {
     if (!any(normal)) {
@@ -260,6 +263,7 @@ void SampleReflectionProbes(out float3 resultColor, out float3 resultLightDir, f
     if (_ssgi_refprobe_count > 3) {
         SampleReflectionProbe(_ssgi_refprobe_texture_3, _ssgi_refprobe_center_3, _ssgi_refprobe_source_3, _ssgi_refprobe_extents_3, _ssgi_refprobe_params_3, _ssgi_refprobe_rayinfo_3, uv, worldPos, worldNormal, resultColor, resultLightDir, contribution);
     }
+#if MFSSGI_MAX_PROBES > 4
     if (_ssgi_refprobe_count > 4) {
         SampleReflectionProbe(_ssgi_refprobe_texture_4, _ssgi_refprobe_center_4, _ssgi_refprobe_source_4, _ssgi_refprobe_extents_4, _ssgi_refprobe_params_4, _ssgi_refprobe_rayinfo_4, uv, worldPos, worldNormal, resultColor, resultLightDir, contribution);
     }
@@ -272,6 +276,7 @@ void SampleReflectionProbes(out float3 resultColor, out float3 resultLightDir, f
     if (_ssgi_refprobe_count > 7) {
         SampleReflectionProbe(_ssgi_refprobe_texture_7, _ssgi_refprobe_center_7, _ssgi_refprobe_source_7, _ssgi_refprobe_extents_7, _ssgi_refprobe_params_7, _ssgi_refprobe_rayinfo_7, uv, worldPos, worldNormal, resultColor, resultLightDir, contribution);
     }
+#endif
 
     //Divide by contribution
     resultColor /= contribution;
@@ -287,15 +292,14 @@ void SampleReflectionProbes(out float3 resultColor, out float3 resultLightDir, f
 float3 GetAlbedo(float2 uv, float3 screenNormal, float3 screenColor, float aaMask, out float occlusion) {
     float3 albedo = 0.0;
 
-    if (_use_deferred) {
+    #ifdef _USE_DEFERRED
         albedo = tex2D(_GBuffer0, uv).rgb;
 
         float lum = albedo.r + albedo.g + albedo.b;
         float4 g1 = tex2D(_GBuffer1, uv);
         occlusion = g1.a;
         albedo = lerp(albedo, (albedo / lum) * _deferred_specular_tint, g1.r);
-        
-    } else {
+    #else
         occlusion = 1.0;
 
         //Fake albedo in Forward-mode
@@ -323,7 +327,7 @@ float3 GetAlbedo(float2 uv, float3 screenNormal, float3 screenColor, float aaMas
             float4 mippedScreenColor = tex2Dlod(_MF_SSGI_ScreenCapture, float4(uv, 0.0, _albedo_boost_miplevel));
             albedo = lerp(albedo, albedo / (max(mippedScreenColor.r, max(mippedScreenColor.g, mippedScreenColor.b)) * 3.0), _albedo_boost * aaMask);
         }
-    }
+    #endif
 
     if (_albedo_min_whiteness > 0.0) {
         albedo = lerp(albedo, 1.0, _albedo_min_whiteness);

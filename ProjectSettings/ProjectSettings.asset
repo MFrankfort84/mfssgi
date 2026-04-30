@@ -650,9 +650,9 @@ PlayerSettings:
   webGLDecompressionFallback: 0
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Android: AMPLIFY_SHADER_EDITOR
-    Standalone: AMPLIFY_SHADER_EDITOR
-    WebGL: AMPLIFY_SHADER_EDITOR
+    Android: AMPLIFY_SHADER_EDITOR;URP_COMPATIBILITY_MODE
+    Standalone: AMPLIFY_SHADER_EDITOR;URP_COMPATIBILITY_MODE
+    WebGL: AMPLIFY_SHADER_EDITOR;URP_COMPATIBILITY_MODE
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

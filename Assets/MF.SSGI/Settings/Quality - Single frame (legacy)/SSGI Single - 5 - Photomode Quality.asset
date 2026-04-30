@@ -15,17 +15,17 @@ MonoBehaviour:
   UseEncodedLightDirections: 1
   SSGISamplesHQ: 10
   SSGISamplesBackfill: 10
-  SSGIRenderScale: 1
-  MaxGIResolution: 9999
+  SSGIRenderScale: 0.7
+  MaxGIResolution: 4096
   ScanDepthMultiplier: 1
   MultiFrameCellSize: 0
   MultiFrameEnergyFalloff: 0.98
   UseRaymarchedShadows: 1
-  RaymarchSamplesHQ: 40
-  RaymarchSamplesBackfill: 20
+  RaymarchSamplesHQ: 20
+  RaymarchSamplesBackfill: 10
   RaymarchCubicDistanceFalloff: 0.5
   RaymarchMaxRangeFactor: 0.5
-  DenoisePasses: 7
+  DenoisePasses: 5
   PreDenoisePixelSize: 25
   ShadowCompensation: 1
   IntensityCompensation: 1

@@ -21,12 +21,12 @@ MonoBehaviour:
   MultiFrameCellSize: 3
   MultiFrameEnergyFalloff: 0.98
   UseRaymarchedShadows: 1
-  RaymarchSamplesHQ: 20
-  RaymarchSamplesBackfill: 15
+  RaymarchSamplesHQ: 14
+  RaymarchSamplesBackfill: 7
   RaymarchCubicDistanceFalloff: 0.5
   RaymarchMaxRangeFactor: 0.5
-  DenoisePasses: 7
-  PreDenoisePixelSize: 20
+  DenoisePasses: 5
+  PreDenoisePixelSize: 25
   ShadowCompensation: 1.03
   IntensityCompensation: 1
   AAQuality: 1

@@ -16,6 +16,8 @@ Shader "MF_SSGI/CaptureLight"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile _ _USE_DEFERRED
+            #pragma multi_compile _ _USE_SSGI_OBJECTS
 
             #include "UnityCG.cginc"
             #include "SSGI.hlsl"
@@ -47,7 +49,7 @@ Shader "MF_SSGI/CaptureLight"
             extern float4 _reflection_probe_ST;
 
             //Fallback
-            extern int _use_ssgi_objects = 0;
+            //_use_ssgi_objects replaced by _USE_SSGI_OBJECTS keyword
             extern float _ssgi_fallback_indirect_intensity = 1.0;
             extern float _ssgi_fallback_indirect_saturation = 1.0;
             extern float _ssgi_fallback_indirect_power = 1.0;
@@ -65,7 +67,7 @@ Shader "MF_SSGI/CaptureLight"
                 float4 resultColor = max(0.0, tex2D(_MainTex, i.uv));
                 
                 //Add fallback Reflection-probe light
-                if (_ssgi_fallback_indirect_intensity > 0.0) {
+                [branch] if (_ssgi_fallback_indirect_intensity > 0.0) {
                     float3 refColor;
                     float3 refLightDir;
                     float occlusion;
@@ -76,9 +78,9 @@ Shader "MF_SSGI/CaptureLight"
                 }
 
                 //Apply SSGIObjects Emmit intenity
-                if (_use_ssgi_objects == 1.0) {
+                #ifdef _USE_SSGI_OBJECTS
                     resultColor.rgb *= tex2D(_MF_SSGI_SSGIObjects, i.uv).r;
-                }
+                #endif
                 return resultColor;
             }
             ENDCG

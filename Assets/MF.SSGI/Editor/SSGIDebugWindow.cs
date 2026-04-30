@@ -26,6 +26,7 @@ namespace MF.SSGI {
             AddAlwaysIncludedShader("MF_SSGI/DepthToWorldPos");
             AddAlwaysIncludedShader("MF_SSGI/SSGI");
             AddAlwaysIncludedShader("MF_SSGI/Denoise");
+            AddAlwaysIncludedShader("MF_SSGI/TAA");
             AddAlwaysIncludedShader("MF_SSGI/FinalBlit");
             AddAlwaysIncludedShader("MF_SSGI/ExpandVertices");
         }

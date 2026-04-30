@@ -5,6 +5,9 @@ EditorUserSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 4
   m_ConfigSettings:
+    GraphicsSettingsInspector_UserSettings:
+      value: 18134705175a055722080a3115371d4a0d55006876786860616b0471b8b1666ab7a960b9b76a666b6f57b96e51234d7de203190efa02040e371bf10225e600163fc415c058925d29c51008d7e813d6eadbd39ad8dde5e3ddccd6aef5bac5e0f1e3f4b7e8aba4b2f5a4a6e8b4bdd1c6c8f3cfb9c0c9d4f9ceaad7dddab0d6f3c0cad39194c4
+      flags: 0
     RecentlyUsedSceneGuid-0:
       value: 050903045d035a0b5d5b0f7a14775e1215154f7e7f2b2734742f4b66b4b6356f
       flags: 0
@@ -30,10 +33,10 @@ EditorUserSettings:
       value: 5a535005540c0f0c58580d7140730944174e492b297e75662e284862b3b0663a
       flags: 0
     RecentlyUsedSceneGuid-8:
-      value: 57500607510d5b5855590e234127074442154e727c7b2564292f4e62b5e63569
+      value: 0700575554055059090c597611270a44154f19782e7a7e63757c4f6be7b66068
       flags: 0
     RecentlyUsedSceneGuid-9:
-      value: 0700575554055059090c597611270a44154f19782e7a7e63757c4f6be7b66068
+      value: 57500607510d5b5855590e234127074442154e727c7b2564292f4e62b5e63569
       flags: 0
     UnityEditor.ShaderGraph.Blackboard:
       value: 18135939215a0a5004000b0e15254b524c030a3f2964643d120d1230e9e93a3fd6e826abbd2e2d293c4ead313b08042de6030a0afa240c0d020be94c4ba75e435d8715fa32c70d15d11612dacc11fee5d3c5d1fe9ab1bf968e93e2ffcbc3e7e2f0b3ffe0e8b0be9af8ffaeffff8e85dd8390e3949c8899daa7
@@ -61,4 +64,6 @@ EditorUserSettings:
   m_VCHierarchyOverlayIcons: 1
   m_VCOtherOverlayIcons: 1
   m_VCAllowAsyncUpdate: 1
+  m_VCScanLocalPackagesOnConnect: 1
   m_ArtifactGarbageCollection: 1
+  m_CompressAssetsOnImport: 1

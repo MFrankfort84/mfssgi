@@ -10,6 +10,9 @@ Shader "MF_SSGI/FinalBlit"
             #pragma vertex vert
             #pragma fragment frag
             #pragma target 3.0
+            #pragma multi_compile _ _ENCODE_LIGHTDIR
+            #pragma multi_compile _ _USE_DEFERRED
+            #pragma multi_compile _ _USE_SSGI_OBJECTS
 
             #include "UnityCG.cginc"
             #include "SSGI.hlsl"
@@ -18,9 +21,9 @@ Shader "MF_SSGI/FinalBlit"
             extern int _debug_motion_vectors = 0;
             extern int _debug_albedo;
 
-            extern int _use_ssgi_objects = 0;
+            //_use_ssgi_objects replaced by _USE_SSGI_OBJECTS keyword
             extern float _max_output_energy;
-            extern int _do_encode_lightdir;
+            //_do_encode_lightdir replaced by _ENCODE_LIGHTDIR keyword
 
             extern float _ssgi_range_min;
             extern float _ssgi_range_max;
@@ -98,12 +101,12 @@ Shader "MF_SSGI/FinalBlit"
             void SampleLQvsHQSSGI(inout float3 color, inout float3 lightDir, inout float shadow, inout float contribution, float3 hqNormal, float2 uv, float falloff) {
                 if (dot(hqNormal, tex2D(_MF_SSGI_Normals_LQ, uv).xyz) > _aa_normal_match_threshold) { //High vs Low quality normal-map compare
                     float4 value = tex2D(_MF_SSGI_Denoised_Final, uv);
-                    if (_do_encode_lightdir == 1) {
+                    #ifdef _ENCODE_LIGHTDIR
                         color += DecodeFloat2ToColor(value.rg) * falloff;
                         lightDir += DecodeFloatToNormal(value.b) * falloff;
-                    } else {
+                    #else
                         color += value.rgb * falloff;
-                    }
+                    #endif
                     shadow += value.a * falloff;
                     contribution += falloff;
                 }
@@ -111,18 +114,151 @@ Shader "MF_SSGI/FinalBlit"
 
             void SampleSimpleSSGI(inout float3 color, inout float3 lightDir, inout float shadow, float2 uv) {
                 float4 value = tex2D(_MF_SSGI_Denoised_Final, uv);
-                if (_do_encode_lightdir == 1) {
+                #ifdef _ENCODE_LIGHTDIR
                     color = DecodeFloat2ToColor(value.rg);
                     lightDir = DecodeFloatToNormal(value.b);
-                } else {
+                #else
                     color = value.rgb;
-                }
+                #endif
                 shadow = value.a;
+            }
+
+            //Joint bilateral upscale of low-res SSGI (_MF_SSGI_Denoised_Final at _ssgi_res)
+            //to full-res, guided by full-res normal+depth. Each of the 4 surrounding LQ texels
+            //is weighted by standard bilinear AND by geometric similarity (normal dot, depth diff).
+            //Mismatched-geometry taps are downweighted, preventing low-res bleeding across edges.
+            //Cost: 8 tex samples (4 LQ normals + 4 LQ SSGI). Replaces the bilinear-blend bleed.
+            void JointBilateralUpscaleSSGI(inout float3 color, inout float3 lightDir, inout float shadow, float2 uv, float3 hqNormal, float hqDepth) {
+                //Find the 4 LQ texel centers surrounding uv
+                float2 lqCoord = uv * _ssgi_res - 0.5;
+                float2 lqFloor = floor(lqCoord);
+                float2 lqFrac = lqCoord - lqFloor;
+
+                float2 invLQRes = 1.0 / _ssgi_res;
+                float2 tap0 = (lqFloor + float2(0.5, 0.5)) * invLQRes;
+                float2 tap1 = (lqFloor + float2(1.5, 0.5)) * invLQRes;
+                float2 tap2 = (lqFloor + float2(0.5, 1.5)) * invLQRes;
+                float2 tap3 = (lqFloor + float2(1.5, 1.5)) * invLQRes;
+
+                //Standard bilinear weights
+                float bw0 = (1.0 - lqFrac.x) * (1.0 - lqFrac.y);
+                float bw1 = lqFrac.x * (1.0 - lqFrac.y);
+                float bw2 = (1.0 - lqFrac.x) * lqFrac.y;
+                float bw3 = lqFrac.x * lqFrac.y;
+
+                //Sharper geometry rejection at deeper pixels (depth tolerance scales with distance)
+                float depthDiffScale = 4.0 / max(hqDepth, 1e-3);
+
+                float3 colorAccum = 0.0;
+                float3 lightDirAccum = 0.0;
+                float shadowAccum = 0.0;
+                float wAccum = 0.0;
+
+                //Manually unrolled 4 taps. Each: sample LQ normal+depth -> weight -> sample SSGI -> accumulate
+                #define MFSSGI_JBU_TAP(uvT, bwT) { \
+                    float4 lqND = tex2D(_MF_SSGI_Normals_LQ, uvT); \
+                    float nSim = saturate(dot(lqND.xyz, hqNormal)); \
+                    nSim *= nSim; nSim *= nSim; \
+                    float dSim = saturate(1.0 - abs(lqND.a - hqDepth) * depthDiffScale); \
+                    float w = bwT * nSim * dSim; \
+                    float4 v = tex2D(_MF_SSGI_Denoised_Final, uvT); \
+                    /* color */ \
+                    colorAccum += /*DECODED_COLOR*/ v.rgb * w; \
+                    shadowAccum += v.a * w; \
+                    wAccum += w; \
+                }
+                #ifdef _ENCODE_LIGHTDIR
+                    //Encoded path - decode each tap before weighting
+                    {
+                        float4 lqND = tex2D(_MF_SSGI_Normals_LQ, tap0);
+                        float nSim = saturate(dot(lqND.xyz, hqNormal)); nSim *= nSim; nSim *= nSim;
+                        float dSim = saturate(1.0 - abs(lqND.a - hqDepth) * depthDiffScale);
+                        float w = bw0 * nSim * dSim;
+                        float4 v = tex2D(_MF_SSGI_Denoised_Final, tap0);
+                        colorAccum += DecodeFloat2ToColor(v.rg) * w;
+                        lightDirAccum += DecodeFloatToNormal(v.b) * w;
+                        shadowAccum += v.a * w; wAccum += w;
+                    }
+                    {
+                        float4 lqND = tex2D(_MF_SSGI_Normals_LQ, tap1);
+                        float nSim = saturate(dot(lqND.xyz, hqNormal)); nSim *= nSim; nSim *= nSim;
+                        float dSim = saturate(1.0 - abs(lqND.a - hqDepth) * depthDiffScale);
+                        float w = bw1 * nSim * dSim;
+                        float4 v = tex2D(_MF_SSGI_Denoised_Final, tap1);
+                        colorAccum += DecodeFloat2ToColor(v.rg) * w;
+                        lightDirAccum += DecodeFloatToNormal(v.b) * w;
+                        shadowAccum += v.a * w; wAccum += w;
+                    }
+                    {
+                        float4 lqND = tex2D(_MF_SSGI_Normals_LQ, tap2);
+                        float nSim = saturate(dot(lqND.xyz, hqNormal)); nSim *= nSim; nSim *= nSim;
+                        float dSim = saturate(1.0 - abs(lqND.a - hqDepth) * depthDiffScale);
+                        float w = bw2 * nSim * dSim;
+                        float4 v = tex2D(_MF_SSGI_Denoised_Final, tap2);
+                        colorAccum += DecodeFloat2ToColor(v.rg) * w;
+                        lightDirAccum += DecodeFloatToNormal(v.b) * w;
+                        shadowAccum += v.a * w; wAccum += w;
+                    }
+                    {
+                        float4 lqND = tex2D(_MF_SSGI_Normals_LQ, tap3);
+                        float nSim = saturate(dot(lqND.xyz, hqNormal)); nSim *= nSim; nSim *= nSim;
+                        float dSim = saturate(1.0 - abs(lqND.a - hqDepth) * depthDiffScale);
+                        float w = bw3 * nSim * dSim;
+                        float4 v = tex2D(_MF_SSGI_Denoised_Final, tap3);
+                        colorAccum += DecodeFloat2ToColor(v.rg) * w;
+                        lightDirAccum += DecodeFloatToNormal(v.b) * w;
+                        shadowAccum += v.a * w; wAccum += w;
+                    }
+                #else
+                    {
+                        float4 lqND = tex2D(_MF_SSGI_Normals_LQ, tap0);
+                        float nSim = saturate(dot(lqND.xyz, hqNormal)); nSim *= nSim; nSim *= nSim;
+                        float dSim = saturate(1.0 - abs(lqND.a - hqDepth) * depthDiffScale);
+                        float w = bw0 * nSim * dSim;
+                        float4 v = tex2D(_MF_SSGI_Denoised_Final, tap0);
+                        colorAccum += v.rgb * w; shadowAccum += v.a * w; wAccum += w;
+                    }
+                    {
+                        float4 lqND = tex2D(_MF_SSGI_Normals_LQ, tap1);
+                        float nSim = saturate(dot(lqND.xyz, hqNormal)); nSim *= nSim; nSim *= nSim;
+                        float dSim = saturate(1.0 - abs(lqND.a - hqDepth) * depthDiffScale);
+                        float w = bw1 * nSim * dSim;
+                        float4 v = tex2D(_MF_SSGI_Denoised_Final, tap1);
+                        colorAccum += v.rgb * w; shadowAccum += v.a * w; wAccum += w;
+                    }
+                    {
+                        float4 lqND = tex2D(_MF_SSGI_Normals_LQ, tap2);
+                        float nSim = saturate(dot(lqND.xyz, hqNormal)); nSim *= nSim; nSim *= nSim;
+                        float dSim = saturate(1.0 - abs(lqND.a - hqDepth) * depthDiffScale);
+                        float w = bw2 * nSim * dSim;
+                        float4 v = tex2D(_MF_SSGI_Denoised_Final, tap2);
+                        colorAccum += v.rgb * w; shadowAccum += v.a * w; wAccum += w;
+                    }
+                    {
+                        float4 lqND = tex2D(_MF_SSGI_Normals_LQ, tap3);
+                        float nSim = saturate(dot(lqND.xyz, hqNormal)); nSim *= nSim; nSim *= nSim;
+                        float dSim = saturate(1.0 - abs(lqND.a - hqDepth) * depthDiffScale);
+                        float w = bw3 * nSim * dSim;
+                        float4 v = tex2D(_MF_SSGI_Denoised_Final, tap3);
+                        colorAccum += v.rgb * w; shadowAccum += v.a * w; wAccum += w;
+                    }
+                #endif
+
+                //Fallback to plain bilinear if all taps got rejected (e.g. very thin features)
+                if (wAccum > 1e-4) {
+                    float invW = 1.0 / wAccum;
+                    color = colorAccum * invW;
+                    lightDir = lightDirAccum * invW;
+                    shadow = shadowAccum * invW;
+                } else {
+                    SampleSimpleSSGI(color, lightDir, shadow, uv);
+                }
             }
 
             //void frag(v2f i, out float4 col:COLOR, out float depth : DEPTH) {
             float4 frag(v2f i) : SV_Target{
-                float linearDepth = tex2D(_MF_SSGI_Normals_HQ, i.uv).a;
+                float4 hqNormalDepth = tex2D(_MF_SSGI_Normals_HQ, i.uv);
+                float linearDepth = hqNormalDepth.a;
 
                 //Early return debug coverage
                 if (_debug_screen_coverage < 1.0) {
@@ -149,11 +285,10 @@ Shader "MF_SSGI/FinalBlit"
                 float3 resultLightDir = 0.0;
                 float resultShadow = 0.0;
 
-                float4 normalDepth = tex2D(_MF_SSGI_Normals_HQ, i.uv);
-                float3 localNormal = normalDepth.xyz;
+                float3 localNormal = hqNormalDepth.xyz;
                 
                 float aaMask = 1.0;
-                if (_aa_quality_level != 0) {
+                [branch] if (_aa_quality_level != 0) {
 
                     float2 edgeSize = float2(1.0 / _ssgi_res.x, 1.0 / _ssgi_res.y);
                     float4 p0 = tex2D(_MF_SSGI_Normals_LQ, i.uv + float2(edgeSize.x, edgeSize.y));
@@ -181,7 +316,7 @@ Shader "MF_SSGI/FinalBlit"
                     //if (dotEdge == 0.0){
                         aaMask = 1.0;
 
-                        float3 hqNormal = tex2D(_MF_SSGI_Normals_HQ, i.uv);
+                        float3 hqNormal = hqNormalDepth.xyz;
                         float contribution = 0.0;
                         
                         //----- 1X
@@ -200,7 +335,7 @@ Shader "MF_SSGI/FinalBlit"
                         SampleLQvsHQSSGI(resultColor, resultLightDir, resultShadow, contribution, hqNormal, i.uv + float2(-_aa_sample_distance.x, -_aa_sample_distance.y), falloff);
 
                         //----- 2X
-                        if (_aa_quality_level > 1) {
+                        [branch] if (_aa_quality_level > 1) {
                             float2 twoX = _aa_sample_distance * 2.0;
                             //Cross
                             falloff = 0.65;
@@ -218,7 +353,7 @@ Shader "MF_SSGI/FinalBlit"
                         }
 
                         //----- 3X
-                        if (_aa_quality_level > 2) {
+                        [branch] if (_aa_quality_level > 2) {
                             float2 threeX = _aa_sample_distance * 3.0;
                             //Cross
                             falloff = 0.65;
@@ -241,16 +376,16 @@ Shader "MF_SSGI/FinalBlit"
                             resultShadow /= contribution;
                             resultLightDir /= contribution;
                         } else {
-                            SampleSimpleSSGI(resultColor, resultLightDir, resultShadow, i.uv);
+                            JointBilateralUpscaleSSGI(resultColor, resultLightDir, resultShadow, i.uv, hqNormalDepth.xyz, hqNormalDepth.a);
                         }
                         if (_aa_debug_edge_detect == 1) {
                             return float4(1.0, 0.0, 0.0, 1.0);
                         }
                     } else {
-                        SampleSimpleSSGI(resultColor, resultLightDir, resultShadow, i.uv);
+                        JointBilateralUpscaleSSGI(resultColor, resultLightDir, resultShadow, i.uv, hqNormalDepth.xyz, hqNormalDepth.a);
                     }
                 } else {
-                    SampleSimpleSSGI(resultColor, resultLightDir, resultShadow, i.uv);
+                    JointBilateralUpscaleSSGI(resultColor, resultLightDir, resultShadow, i.uv, hqNormalDepth.xyz, hqNormalDepth.a);
                 }
 
                 //Apply light-dir
@@ -275,11 +410,11 @@ Shader "MF_SSGI/FinalBlit"
 
                 //Apply SSGIObjects receive intenity
                 float shadowReceiveIntensity = 1.0;
-                if (_use_ssgi_objects == 1) {
+                #ifdef _USE_SSGI_OBJECTS
                     float4 ssgiObjectsColors = tex2D(_MF_SSGI_SSGIObjects, i.uv);
                     ssgiColor *= ssgiObjectsColors.g;
                     shadowReceiveIntensity = ssgiObjectsColors.b;
-                }
+                #endif
 
                 //Energy: Limit output
                 float compMagSqr = dot(ssgiColor, ssgiColor);
@@ -305,7 +440,7 @@ Shader "MF_SSGI/FinalBlit"
 
                 //Apply Shadow boost
                 float occlusion = 1.0;
-                float3 albedo = GetAlbedo(i.uv, tex2D(_MF_SSGI_Normals_HQ, i.uv).rgb, screenColor, aaMask, occlusion);
+                float3 albedo = GetAlbedo(i.uv, hqNormalDepth.rgb, screenColor, aaMask, occlusion);
                 float3 occludedScreenColor = screenColor;
 
                 //Apply deferred occlusion

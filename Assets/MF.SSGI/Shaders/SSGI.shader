@@ -19,6 +19,7 @@ Shader "MF_SSGI/SSGI"
             #pragma vertex vert
             #pragma fragment frag
             #pragma target 3.0
+            #pragma multi_compile _ _ENCODE_LIGHTDIR
             //#define GL_FRAGMENT_PRECISION_HIGH 1
 
             #include "UnityCG.cginc"
@@ -35,6 +36,8 @@ Shader "MF_SSGI/SSGI"
             extern float2 _rnd_pixel;
             extern float _multi_sample_normal_distance;
 
+            //Note: _do_encode_lightdir replaced by _ENCODE_LIGHTDIR keyword (multi_compile)
+
             extern float2 _ssgi_res;
             extern float _ssgi_range_max;
 
@@ -42,8 +45,6 @@ Shader "MF_SSGI/SSGI"
             extern float _scan_ratio_y;
             extern float _scan_noise;
             extern float _edge_vignette = 0.2;
-            extern int _do_encode_lightdir = 0;
-
             extern float _ssgi_samples_hq = 0;
             extern float _ssgi_samples_backfill = 0;
             extern float _ssgi_samples_reduction = 0.5;
@@ -160,7 +161,8 @@ Shader "MF_SSGI/SSGI"
 
                     float depthToTest = lerp(localDepth, envDepth, lerpExp);
                     float4 depthTestUV4 = float4(lerp(uv, envUVMipped.xy, lerpExp), 0.0, 0.0);
-                    depthTestUV4.xy = round(depthTestUV4 * _ssgi_res) / _ssgi_res;
+                    //Snap to pixel CENTER (not border): (floor(uv*res) + 0.5) / res
+                    depthTestUV4.xy = (floor(depthTestUV4.xy * _ssgi_res) + 0.5) / _ssgi_res;
                     if (prevUV.x == depthTestUV4.x && prevUV.y == depthTestUV4.y) {
                         //debugCount++;
                         continue;
@@ -207,10 +209,11 @@ Shader "MF_SSGI/SSGI"
             }
 
             float4 EncodeResult(float3 color, float3 lightDir, float shadow) {
-                if (_do_encode_lightdir == 1) {
+                #ifdef _ENCODE_LIGHTDIR
                     return float4(EncodeColorToFloat2(color), EncodeNormalToFloat(normalize(lightDir)), max(0.0, shadow));
-                }
-                return float4(color, max(0.0, shadow));
+                #else
+                    return float4(color, max(0.0, shadow));
+                #endif
             }
 
             void SampleReprojectedGI(float2 uv, float3 localWorldPos, float localDepth, inout float3 color, inout float3 lightdir, inout float shadow, inout bool didFindGI, float falloff) {
@@ -229,12 +232,12 @@ Shader "MF_SSGI/SSGI"
                         //Decode
                         float3 decodedColor = 0.0;
                         float3 decodedDir = 0.0;
-                        if (_do_encode_lightdir == 1) {
+                        #ifdef _ENCODE_LIGHTDIR
                             decodedColor = DecodeFloat2ToColor(value.rg) * falloff;
                             decodedDir = DecodeFloatToNormal(value.b) * falloff;
-                        } else {
+                        #else
                             decodedColor = value.rgb * falloff;
-                        }
+                        #endif
 
                         //use color (and light dir) only if Lum is greater
                         if (decodedColor.r + decodedColor.g + decodedColor.b > color.r + color.g + color.b) {
@@ -259,7 +262,7 @@ Shader "MF_SSGI/SSGI"
                 float2 pixelSize = 1.0 / _ssgi_res;
                 float3 localWorldNormal = localNormalAndDepth.xyz;
 
-                if (_multi_sample_normal_distance > 0.0) {
+                [branch] if (_multi_sample_normal_distance > 0.0) {
                     float2 pixelSize2 = pixelSize * _multi_sample_normal_distance;
                     
                     //Corners
@@ -289,7 +292,7 @@ Shader "MF_SSGI/SSGI"
 
                 //--------------------- Multi-frame reprojection ---------------------
                 bool requiresBackfill = false;
-                if (_multiframe_cell_size > 0){
+                [branch] if (_multiframe_cell_size > 0){
                     bool cycleX = (pixelX + _rnd_pixel.x) % _multiframe_cell_size != 0.0;
                     bool cycleY = (pixelY + _rnd_pixel.y) % _multiframe_cell_size != 0.0;
 
@@ -334,11 +337,17 @@ Shader "MF_SSGI/SSGI"
 
 
                 //--------------------- SSGI calculations ---------------------
-                //Cache
+                //Cache (precomputed reciprocals — saves a div per inner-loop iteration)
                 float lightDirCastRange = _light_cast_dot_max - _light_cast_dot_min;
                 float lightDirReceiveRange = _light_receive_dot_max - _light_receive_dot_min;
+                float invLightDirCastRange = 1.0 / max(lightDirCastRange, 1e-5);
+                float invLightDirReceiveRange = 1.0 / max(lightDirReceiveRange, 1e-5);
                 float nearCamRange = _depth_cutoff_far - _depth_cutoff_near;
+                float invNearCamRange = 1.0 / max(nearCamRange, 1e-5);
                 float maxInputEnergySqr = _max_input_energy * _max_input_energy;
+                float invContactShadowRange = 1.0 / max(_contact_shadow_range, 1e-5);
+                float contactShadowRangeSqr = _contact_shadow_range * _contact_shadow_range;
+                float raymarchContactMinDistSqr = _raymarch_contact_min_dist * _raymarch_contact_min_dist;
 
                 //Time to scan
                 float3 resultColor = 0.0;
@@ -374,36 +383,37 @@ Shader "MF_SSGI/SSGI"
                         return EncodeResult(float3(1.0, 0.0, 0.0), 0.0, 0.0);
                     }
                 }
+                float skyboxInfluencePerSample = _skybox_influence / max(samples * samples, 1.0);
+                float invSamples = 1.0 / samples;
 
                 [loop]
                 for (float y = 0; y < samples; y++) {
-                    float gaussY = sin(y / samples * 3.14159);
-                    float offsetY = ((y * 2.0) - samples) / samples * _scan_ratio_y * _scan_base_range;
+                    float ty = y * invSamples;
+                    float gaussY = 4.0 * ty * (1.0 - ty); //Parabola, replaces sin(t*PI)
+                    float offsetY = (ty * 2.0 - 1.0) * _scan_ratio_y * _scan_base_range;
 
                     [loop]
                     for (float x = 0; x < samples; x++) {
-                        float gaussX = sin(x / samples * 3.14159);
+                        float tx = x * invSamples;
+                        float gaussX = 4.0 * tx * (1.0 - tx); //Parabola, replaces sin(t*PI)
                         float uvLerp = 1.0 - min(gaussX, gaussY);
 
                         float3 envUVMipped = float3(
-                            ((x * 2.0) - samples) / samples * _scan_base_range,
+                            (tx * 2.0 - 1.0) * _scan_base_range,
                             offsetY,
                             uvLerp
                         );
 
-                        float2 preOffseted = i.uv + envUVMipped;
-                        envUVMipped.xy += float2(
-                            ((frac(sin(dot(preOffseted, float2(-67.3634, 78.233))) * 4758.7896)) - 0.5) * 2.0,
-                            ((frac(sin(dot(preOffseted, float2(12.9898, -78.233))) * 3758.123)) - 0.5) * 2.0
-                            ) * _scan_noise;
+                        //One cheap hash gives both the noise offset and the reduction roll
+                        float3 rnd = MFSSGI_Hash23(i.uv + envUVMipped.xy);
+                        envUVMipped.xy += (rnd.xy - 0.5) * 2.0 * _scan_noise;
 
                         //Scale UV
                         envUVMipped.xy *= depthScale;
 
                         //Test random threshold based on the distance to center;
-                        if(_ssgi_samples_reduction != 1.0){
-                            float rndReduction = frac(sin(dot(envUVMipped.xy, float2(-67.3634, 78.233))) * 4758.7896);
-                            if(rndReduction * envUVMipped.z > _ssgi_samples_reduction){
+                        [branch] if(_ssgi_samples_reduction != 1.0){
+                            if(rnd.z * envUVMipped.z > _ssgi_samples_reduction){
                                 continue;
                             }
                         }
@@ -417,7 +427,8 @@ Shader "MF_SSGI/SSGI"
                         }
 
                         //Skip: if snapped-to-pixel UV's match the previous sample
-                        envUVMipped.xy = round(envUVMipped * _ssgi_res) / _ssgi_res;
+                        //Snap to pixel CENTER (not border): (floor(uv*res) + 0.5) / res
+                        envUVMipped.xy = (floor(envUVMipped.xy * _ssgi_res) + 0.5) / _ssgi_res;
 
                         float4 envUVMipped4 = float4(envUVMipped.xy, 0.0, 0.0);
                         //if (prevUV.x == envUVMipped4.x && prevUV.y == envUVMipped4.y) { //Only a hand full of pixels!
@@ -450,14 +461,14 @@ Shader "MF_SSGI/SSGI"
 
                         //Skip: If Skybox found!
                         if (envDepth > localDepth * _scan_depth_threshold_factor) {
-                            resultColor += color * (_skybox_influence / (samples * samples));
+                            resultColor += color * skyboxInfluencePerSample;
                             continue;
                         }
 
                         //Skip & fade: If the depth is too close to the camera, it's contribution should be removed/fade-in to prevent near-object-scatter
                         float nearCamMask = 1.0;
                         if (envDepth < _depth_cutoff_far) {
-                            nearCamMask = saturate((envDepth - _depth_cutoff_near) / nearCamRange);
+                            nearCamMask = saturate((envDepth - _depth_cutoff_near) * invNearCamRange);
 
                             //Subtract float of the contribution: This boosts the intensity where area's weren't lit because of the near-cam masking
                             totalContribution -= contribution * ((1.0 - nearCamMask) * 0.5f);
@@ -484,7 +495,7 @@ Shader "MF_SSGI/SSGI"
 
                         //Receiving: Lambert-like behaviour
                         float lightReceiveDot = -dot(lightDir, localWorldNormal);
-                        float lambertSurface = (lightReceiveDot - _light_receive_dot_min) / lightDirReceiveRange;
+                        float lambertSurface = (lightReceiveDot - _light_receive_dot_min) * invLightDirReceiveRange;
                         if (lambertSurface > 1.0) {
                             lambertSurface = 1.0;
                         } else if (lambertSurface < 0.0) {
@@ -495,16 +506,14 @@ Shader "MF_SSGI/SSGI"
                         float lightDirCastDot = dot(lightDir, envWorldNormal);
                         float lightDirCastMask = 1.0;
                         if (!omniDir) {
-                            lightDirCastMask = saturate((lightDirCastDot - _light_cast_dot_min) / lightDirCastRange);
+                            lightDirCastMask = saturate((lightDirCastDot - _light_cast_dot_min) * invLightDirCastRange);
                         }
 
                         //Apply edge vignette
                         float vignette = 1.0;
-                        if (_edge_vignette > 0.0) {
-                            vignette = min(vignette, envUVMipped.x / _edge_vignette);
-                            vignette = min(vignette, envUVMipped.y / _edge_vignette);
-                            vignette = min(vignette, (1.0 - envUVMipped.x) / _edge_vignette);
-                            vignette = min(vignette, (1.0 - envUVMipped.y) / _edge_vignette);
+                        [branch] if (_edge_vignette > 0.0) {
+                            float2 distEdge = min(envUVMipped.xy, 1.0 - envUVMipped.xy);
+                            vignette = saturate(min(distEdge.x, distEdge.y) / _edge_vignette);
                         }
 
                         //Pixel intensity: When the camera moves away, a single pixel represents more surface area, therefore should add more light
@@ -519,7 +528,7 @@ Shader "MF_SSGI/SSGI"
                         //bool skipRaymarch = requiresBackfill || (omniDir && lightDirCastDot < 0.1);
                         bool skipRaymarch = omniDir && lightDirCastDot < 0.1;
                          
-                        if (!skipRaymarch && _shadow_intensity > 0.0 && localDepth < _raymarch_max_distance) {
+                        [branch] if (!skipRaymarch && _shadow_intensity > 0.0 && localDepth < _raymarch_max_distance) {
 
                             float3 blockedAtWorldPos = 0.0;
                             float depthBias = lerp(_raymarch_surface_depth_bias_min, _raymarch_surface_depth_bias_max, saturate(lightReceiveDot));
@@ -530,14 +539,15 @@ Shader "MF_SSGI/SSGI"
                             }
 
                             if (Raymarch(samples, uv, lightDistance, localWorldPos, localWorldNormal, localDepth, envUVMipped, envDepth, depthBias, blockedAtWorldPos, blockedAtLerp)){ //, debugCount)){
-                                float rayDistance = length(blockedAtWorldPos - localWorldPos);
                                 if (lightDistance > _raymarch_casted_min_dist) {
                                     blocked = true;
 
-                                    //Done raymarching
-                                    if (blocked && _contact_shadow_range > 0.0) {
-                                        if (rayDistance > _raymarch_contact_min_dist && rayDistance < _contact_shadow_range) {
-                                            float localContactShadow = 1.0 - saturate(rayDistance / _contact_shadow_range);
+                                    //Done raymarching - compare squared first, only sqrt when needed
+                                    if (_contact_shadow_range > 0.0) {
+                                        float3 rayDelta = blockedAtWorldPos - localWorldPos;
+                                        float rayDistanceSqr = dot(rayDelta, rayDelta);
+                                        if (rayDistanceSqr > raymarchContactMinDistSqr && rayDistanceSqr < contactShadowRangeSqr) {
+                                            float localContactShadow = 1.0 - saturate(sqrt(rayDistanceSqr) * invContactShadowRange);
                                             localContactShadow *= localContactShadow;
                                             contactShadows = max(contactShadows, localContactShadow);
                                         }
@@ -549,10 +559,10 @@ Shader "MF_SSGI/SSGI"
                         //Add result: Sample environment and multiply with all masks & influences
                         float mask = contribution * vignette * nearCamMask * lightDirCastMask;
                         if (mask > 0.001) {
-                            //Energy: Limit input color energy
+                            //Energy: Limit input color energy (rsqrt is faster than 1/sqrt on most GPUs)
                             float colorMagSqr = dot(color, color);
                             if (colorMagSqr > maxInputEnergySqr) {
-                                color = color / sqrt(colorMagSqr) * _max_input_energy; //Devide by zero? WEBGL turns black?
+                                color *= rsqrt(colorMagSqr) * _max_input_energy;
                             }
 
                             //Light Attenuation: When light is emitted, the intensity drops further away from the source
@@ -644,7 +654,7 @@ Shader "MF_SSGI/SSGI"
                 resultColor *= _ssgi_intensity;
 
                 //Add fallback Reflection-probe light
-                if (_ssgi_fallback_direct_intensity > 0.0) {
+                [branch] if (_ssgi_fallback_direct_intensity > 0.0) {
                     float3 refColor;
                     float3 refLightDir;
                     SampleReflectionProbes(refColor, refLightDir, localWorldPos, localWorldNormal, i.uv, _ssgi_fallback_direct_intensity, _ssgi_fallback_direct_saturation, _ssgi_fallback_direct_power);
