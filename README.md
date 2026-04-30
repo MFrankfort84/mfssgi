@@ -4,6 +4,12 @@ MF.SSGI - URP - Screen Space Global Illumination - Raymarched shadows
 Trailers & tutorial video's: **https://www.youtube.com/watch?v=fPAuykKMD_A&list=PLNDnpD94U4_i-nzHHJzB65QA9ieSs_V1u**
 **Documentation: PDF included in release!**
 
+-------- V1.2 release note -------- 
+- 29% performance increase (at 8k, using the SSGI Reprojected - 4 - Ultra High Quality profile)
+- More stable denoising
+- Low & Medium quality AA now looks better then High quality did before
+- Thanks Claude!
+
 —-------------
 Do you want to boost your URP game to the next level? Looking for a realtime GI solution that even runs on Mobile?
 Look no further; MF.SSGI is easy to use, highly customizable & runs on all platforms!
