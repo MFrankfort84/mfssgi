@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9e6ed0b4b2bdcf4cbb973884e702528, type: 3}
+  m_Name: SSGI Lighting settings
+  m_EditorClassIdentifier: 
+  LightCastDotMin: 0.05
+  LightCastDotMax: 0.99
+  LightReceiveDotMin: 0.05
+  LightReceiveDotMax: 1
+  LightDirectionDotMinSoft: -0.25
+  LightDirectionDotMaxSoft: 1
+  LightDirectionIntensitySoft: 0.5
+  LightDirectionDotMinHard: 0.65
+  LightDirectionDotMaxHard: 1
+  LightDirectionIntensityHard: 1.25
+  ShadowsLambertInfluence: 0.25
+  MaxLightAttenuation: 2
+  MaxInputEnergy: 5
+  MaxOutputEnergy: 25
+  DistanceEnergyBoost: 0.25
+  MinimumAlbedoWhiteness: 0.005
+  SpecularTint: {r: 0.18814524, g: 0.21697497, b: 0.26415092, a: 1}
+  AlbedoDetailBoost: 0.25
+  AlbedoDetailBoostMipLevle: 2
+  AlbedoSubtractFogColor: 0.25
+  AlbedoSubtractSkyColor: 0.25
+  AlbedoContrast: 0.9

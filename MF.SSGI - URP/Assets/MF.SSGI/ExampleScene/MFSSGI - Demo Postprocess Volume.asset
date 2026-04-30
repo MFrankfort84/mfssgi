@@ -1,0 +1,104 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5214911027779324615
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 630a38b420b39c040b1469b07a79e7d6, type: 3}
+  m_Name: SSGIVolumeComponent
+  m_EditorClassIdentifier: 
+  active: 1
+  PreMultiply:
+    m_OverrideState: 0
+    m_Value: 0.25
+  FinalContrast:
+    m_OverrideState: 0
+    m_Value: 1
+  FinalIntensity:
+    m_OverrideState: 1
+    m_Value: 0.333
+  LightFalloffDistance:
+    m_OverrideState: 0
+    m_Value: 1
+  LightIntensity:
+    m_OverrideState: 1
+    m_Value: 1
+  LightDirInfluence:
+    m_OverrideState: 1
+    m_Value: 0.8
+  NormalmapBoost:
+    m_OverrideState: 1
+    m_Value: 0.5
+  GITint:
+    m_OverrideState: 0
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+  GIContrast:
+    m_OverrideState: 1
+    m_Value: 0.8
+  GISaturation:
+    m_OverrideState: 1
+    m_Value: 1.25
+  GIVibrance:
+    m_OverrideState: 0
+    m_Value: 0.5
+  FallbackDirectIntensity:
+    m_OverrideState: 1
+    m_Value: 0.1
+  FallbackDirectSaturation:
+    m_OverrideState: 0
+    m_Value: 1
+  FallbackDirectPower:
+    m_OverrideState: 0
+    m_Value: 2
+  SkyboxInfluence:
+    m_OverrideState: 0
+    m_Value: 1
+  ShadowIntensity:
+    m_OverrideState: 1
+    m_Value: 2.5
+  ShadowTint:
+    m_OverrideState: 0
+    m_Value: {r: 0.06, g: 0.08, b: 0.12, a: 1}
+  ShadowExponential:
+    m_OverrideState: 1
+    m_Value: 0.35
+  ShadowContrast:
+    m_OverrideState: 1
+    m_Value: 0.1
+  ContactShadowsRange:
+    m_OverrideState: 0
+    m_Value: 0.25
+  ContactShadowsSoftKnee:
+    m_OverrideState: 0
+    m_Value: 0.25
+  CastedShadowsIntensity:
+    m_OverrideState: 0
+    m_Value: 10
+  CastedShadowsOmniDirectional:
+    m_OverrideState: 0
+    m_Value: 0.5
+  CastedShadowsRange:
+    m_OverrideState: 0
+    m_Value: 15
+  CastedShadowsSoftKnee:
+    m_OverrideState: 0
+    m_Value: 0.85
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7fd9488000d3734a9e00ee676215985, type: 3}
+  m_Name: MFSSGI - Demo Postprocess Volume
+  m_EditorClassIdentifier: 
+  components:
+  - {fileID: -5214911027779324615}

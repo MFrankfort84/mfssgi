@@ -1,0 +1,18 @@
+Hi!
+Thank you for purchasing MF.SSGI! This helps me develop & support the asset, so much appreciated!
+
+
+----------- V.1.0 to V1.1 upgrade -----------
+If you experiencing issues after upgrading to V1.1, please follow these steps:
+
+  1: Please remove MF.SSGI from the project
+  2: Do NOT remove the missing scripts (SSGICamera, SSGIObject, SSGIRenderfeature)
+  3: Re-import V1.1, the missing scripts should now be found again
+  4: Make sure the active renderer has MF.SSGI renderfeature assigned
+  5: In case of a custom Quality-preset, make sure to (re)assign the quality-preset of your choise.
+	- The 'old' presets are now part of the "Quality - Single frame (legacy)" folder
+	- Tip: Pick an equivalent profile from the "Quality - Reprojected" folder, as it will run much smoother at higher overall quality
+  6: Re-visit the post-process Volume's in your scene and re-adjust the SSGIVolumeComponent-override accordingly
+  7: Performance tip: Make sure Unity's 'Default' URP renderer does not have an SSGI-feature; its better to create a new Renderer for those camera's that need SSGI. 
+     Why? You can find more details in the updated documentation under the section "Realtime Reflection-probes & other scene Camera’s"
+
