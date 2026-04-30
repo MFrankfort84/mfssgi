@@ -4,6 +4,12 @@ MF.SSGI - URP - Screen Space Global Illumination - Raymarched shadows
 Trailers & tutorial video's: **https://www.youtube.com/watch?v=fPAuykKMD_A&list=PLNDnpD94U4_i-nzHHJzB65QA9ieSs_V1u**
 **Documentation: PDF included in release!**
 
+-------- V1.3 release note -------- 
+- **BIRP & URP support**
+- From 48 FPS to 82 FPS compared to V1.0!!! A whoping **71% performance boost**!
+- Fixed diagonal stretching SSGI samples
+- Fixed 'silhouette cutout' visual artifact
+
 -------- V1.2 release note -------- 
 - 29% performance increase (at 8k, using the SSGI Reprojected - 4 - Ultra High Quality profile)
 - More stable denoising
